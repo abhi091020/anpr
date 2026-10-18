@@ -1,0 +1,13 @@
+# The virtual environment: not portable, and it contains files over GitHub's 100 MB limit.
+# Recreate it with:  python -m venv .venv  then  pip install -r requirements.txt
+.venv/
+
+# Python and tool caches
+__pycache__/
+*.pyc
+.cache/
+
+# Server logs and half-written downloads
+app/server.log
+app/server.err
+*.part

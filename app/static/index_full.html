@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PPE ANPR Monitor</title>
+<style>
+  :root {
+    --bg: #f6f7f8; --panel: #ffffff; --fg: #1b2330; --muted: #5d6877; --line: #dde1e6;
+    --accent: #1f6feb; --bad: #c62828; --ok: #1b7f3b; --warn: #b26a00; --bar: #3b7ddd; --bar2: #d9822b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #11151b; --panel: #1a2029; --fg: #e6eaf0; --muted: #98a3b3; --line: #2b3441;
+            --accent: #5aa0ff; --bad: #ff7b72; --ok: #56d364; --warn: #e3b341; --bar: #5aa0ff; --bar2: #f0a050; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.45 system-ui, "Segoe UI", sans-serif; }
+  header { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 14px 20px; border-bottom: 1px solid var(--line); background: var(--panel); }
+  h1 { font-size: 18px; margin: 0; font-weight: 600; }
+  #status { color: var(--muted); font-size: 13px; }
+  #status .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); margin-right: 6px; }
+  #status.run .dot { background: var(--ok); }
+  #status.err .dot { background: var(--bad); }
+  main { padding: 16px 20px; display: grid; gap: 16px; max-width: 1400px; margin: 0 auto; }
+  .row { display: grid; gap: 16px; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  @media (max-width: 900px) { .row { grid-template-columns: minmax(0, 1fr); } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; min-width: 0; }
+  .card h2 { font-size: 14px; margin: 0 0 10px; font-weight: 600; }
+  .video { background: #000; border-radius: 6px; overflow: hidden; aspect-ratio: 16 / 9; display: grid; place-items: center; position: relative; }
+  .video img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .video canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
+  .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; color: var(--muted); font-size: 13px; }
+  select { padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); font: inherit; width: 100%; }
+  .video span { color: #9aa; font-size: 13px; padding: 0 12px; text-align: center; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+  input[type=text], input[type=number] { width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); font: inherit; }
+  .btns { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  button { padding: 7px 14px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font: inherit; cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.danger { color: var(--bad); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .checks { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  .checks label { display: flex; gap: 6px; align-items: center; margin: 0; color: var(--fg); font-size: 13px; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .tile .lbl { color: var(--muted); font-size: 12px; }
+  .tile .num { font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .tile.bad .num { color: var(--bad); }
+  .bars { display: grid; gap: 8px; }
+  .bar { display: grid; grid-template-columns: 90px 1fr 40px; gap: 8px; align-items: center; font-size: 13px; }
+  .bar .track { background: var(--bg); border-radius: 4px; height: 14px; overflow: hidden; }
+  .bar .fill { height: 100%; background: var(--bar2); border-radius: 4px; }
+  .bar .n { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .hours { display: flex; align-items: flex-end; gap: 4px; height: 120px; }
+  .hours div { flex: 1; background: var(--bar); border-radius: 3px 3px 0 0; min-height: 2px; position: relative; }
+  .hours small { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--muted); margin-top: 3px; }
+  .hours-wrap { padding-bottom: 18px; }
+  .tablewrap { max-height: 360px; overflow: auto; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; position: sticky; top: 0; background: var(--panel); }
+  td img { height: 34px; border-radius: 4px; display: block; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); font-size: 12px; margin-right: 4px; }
+  .pill.bad { color: var(--bad); border-color: var(--bad); }
+  .pill.ok { color: var(--ok); border-color: var(--ok); }
+  .pill.warn { color: var(--warn); border-color: var(--warn); }
+  .empty { color: var(--muted); padding: 14px 4px; }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>PPE ANPR Monitor</h1>
+  <div id="status"><span class="dot"></span><span id="status-text">idle</span></div>
+</header>
+
+<main>
+  <div class="row">
+    <section class="card">
+      <h2>Live view</h2>
+      <div class="video" id="videobox"><img id="live" alt="Live annotated video" hidden><span id="live-msg">No stream. Choose a source and press Start.</span><canvas id="overlay" hidden></canvas></div>
+      <div class="toolbar">
+        <span id="zone-text">Gate box: whole frame.</span>
+        <span>Drag on the video to draw the gate box. Only vehicles inside it are read.</span>
+        <button id="clear-zone">Use whole frame</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Source</h2>
+      <label for="src">Video file path, RTSP URL or camera number</label>
+      <input type="text" id="src" placeholder="rtsp://user:pass@192.168.1.10:554/stream  or  C:\videos\gate.mp4">
+      <label for="file">Or upload a video</label>
+      <input type="file" id="file" accept="video/*">
+      <label for="mode">What to do</label>
+      <select id="mode">
+        <option value="gate" selected>Gate ANPR: read plates of vehicles inside the box</option>
+        <option value="full">Whole frame: people, PPE and plates</option>
+      </select>
+      <label>Items every person must wear (whole-frame mode only)</label>
+      <div class="checks" id="req">
+        <label><input type="checkbox" value="helmet" checked> Helmet</label>
+        <label><input type="checkbox" value="vest" checked> Vest</label>
+        <label><input type="checkbox" value="goggles"> Goggles</label>
+        <label><input type="checkbox" value="safety_shoe"> Shoes</label>
+      </div>
+      <label for="every">Analyse every Nth frame (higher is faster on CPU)</label>
+      <input type="number" id="every" value="3" min="1" max="30">
+      <div class="btns">
+        <button class="primary" id="start">Start</button>
+        <button id="stop">Stop</button>
+        <button class="danger" id="reset">Clear results</button>
+      </div>
+      <p class="hint">Goggles and shoes are small in CCTV footage and the model detects them less reliably, so they are off by default.</p>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>Test with a photo</h2>
+    <p class="hint" style="margin-top:0">Upload a photo of a vehicle. This reads the plate straight away, with no video or gate box. Test photos are in <b>C:\Users\Admin\ppe-anpr\dataset-indian\images</b>.</p>
+    <div class="toolbar" style="margin-top:0">
+      <input type="file" id="photo" accept="image/*" multiple>
+      <button class="primary" id="photo-go">Read plate</button>
+      <span id="photo-msg"></span>
+    </div>
+    <div id="photo-results" style="display:grid;gap:12px;margin-top:12px"></div>
+  </section>
+
+  <section class="tiles">
+    <div class="card tile"><div class="lbl">People checked</div><div class="num" id="t-people">0</div></div>
+    <div class="card tile bad"><div class="lbl">Missing required PPE</div><div class="num" id="t-viol">0</div></div>
+    <div class="card tile"><div class="lbl">Vehicles logged</div><div class="num" id="t-plates">0</div></div>
+    <div class="card tile"><div class="lbl">Plate read OK</div><div class="num" id="t-valid">0</div></div>
+    <div class="card tile bad"><div class="lbl">Need review</div><div class="num" id="t-review">0</div></div>
+  </section>
+
+  <div class="row" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+    <section class="card"><h2>People seen without each item</h2><div class="bars" id="bars"></div></section>
+    <section class="card"><h2>Plates by hour</h2><div class="hours-wrap"><div class="hours" id="hours"></div></div><div class="empty" id="hours-empty" hidden>No plates yet.</div></section>
+  </div>
+
+  <div class="row" style="grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));">
+    <section class="card">
+      <h2>Latest PPE violations</h2>
+      <div class="tablewrap"><table><thead><tr><th>Time</th><th>Snapshot</th><th>Missing</th></tr></thead><tbody id="tb-viol"></tbody></table></div>
+      <div class="empty" id="viol-empty">No violations recorded.</div>
+    </section>
+    <section class="card">
+      <h2>Vehicles at the gate</h2>
+      <div class="tablewrap"><table><thead><tr><th>Time</th><th>Vehicle</th><th>Plate photo</th><th>Plate</th><th>Status</th></tr></thead><tbody id="tb-plate"></tbody></table></div>
+      <div class="empty" id="plate-empty">No plates recorded.</div>
+    </section>
+  </div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const LABEL = { helmet: 'Helmet', vest: 'Vest', goggles: 'Goggles', safety_shoe: 'Shoes' };
+let streaming = false;
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  if (!r.ok) throw new Error(path + ' -> ' + r.status);
+  return r.json();
+}
+const post = (path, body) => api(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+
+function cell(text) { const td = document.createElement('td'); td.textContent = text; return td; }
+function imgCell(src) {
+  const td = document.createElement('td');
+  if (src) { const i = document.createElement('img'); i.src = '/snaps/' + src; i.alt = 'snapshot'; td.append(i); }
+  return td;
+}
+function pills(items) {
+  const td = document.createElement('td');
+  items.forEach(t => { const s = document.createElement('span'); s.className = 'pill bad'; s.textContent = t; td.append(s); });
+  return td;
+}
+
+async function refreshStatus() {
+  const s = await api('/api/status');
+  const el = $('status');
+  el.className = s.error ? 'err' : (s.running ? 'run' : '');
+  $('status-text').textContent = s.error ? 'Error: ' + s.error
+    : s.running ? `${s.message} · ${s.frames} frames · ${s.fps} fps`
+    : (s.message || 'idle');
+  const live = $('live');
+  if (s.running && !streaming) { live.src = '/stream?' + Date.now(); live.hidden = false; $('overlay').hidden = false; $('live-msg').hidden = true; streaming = true; }
+  if (!s.running && streaming) { streaming = false; $('live-msg').hidden = false; $('live-msg').textContent = s.error ? 'Stopped: ' + s.error : 'Stream ended.'; }
+  zone = s.zone;
+  $('zone-text').textContent = zone ? 'Gate box set.' : 'Gate box: whole frame.';
+}
+
+async function refreshData() {
+  const [s, v, p] = await Promise.all([api('/api/summary'), api('/api/violations'), api('/api/plates')]);
+  $('t-people').textContent = s.people;
+  $('t-viol').textContent = s.violations;
+  $('t-plates').textContent = s.plates;
+  $('t-valid').textContent = s.plates_ok;
+  $('t-review').textContent = s.plates_review;
+
+  const max = Math.max(1, ...Object.values(s.missed));
+  const bars = $('bars'); bars.replaceChildren();
+  s.items.forEach(k => {
+    const row = document.createElement('div'); row.className = 'bar';
+    const l = document.createElement('span'); l.textContent = LABEL[k];
+    const t = document.createElement('div'); t.className = 'track';
+    const f = document.createElement('div'); f.className = 'fill'; f.style.width = (100 * s.missed[k] / max) + '%'; t.append(f);
+    const n = document.createElement('span'); n.className = 'n'; n.textContent = s.missed[k];
+    row.append(l, t, n); bars.append(row);
+  });
+
+  const hours = $('hours'); hours.replaceChildren();
+  $('hours-empty').hidden = s.plates_by_hour.length > 0;
+  const hm = Math.max(1, ...s.plates_by_hour.map(h => h.n));
+  s.plates_by_hour.forEach(h => {
+    const d = document.createElement('div'); d.style.height = (100 * h.n / hm) + '%'; d.title = `${h.h}:00 — ${h.n} plates`;
+    const sm = document.createElement('small'); sm.textContent = h.h; d.append(sm); hours.append(d);
+  });
+
+  const tv = $('tb-viol'); tv.replaceChildren();
+  $('viol-empty').hidden = v.length > 0;
+  v.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.append(cell(r.ts.slice(11)), imgCell(r.snapshot), pills(r.missing.split(',').filter(Boolean).map(k => LABEL[k] || k)));
+    tv.append(tr);
+  });
+
+  const tp = $('tb-plate'); tp.replaceChildren();
+  $('plate-empty').hidden = p.length > 0;
+  p.forEach(r => {
+    const tr = document.createElement('tr');
+    const pc = document.createElement('td');
+    pc.textContent = r.plate || '(no plate read)';
+    const st = r.status || (r.valid ? 'ok' : 'review');
+    const sc = document.createElement('td'); const sp = document.createElement('span');
+    sp.className = 'pill ' + (st === 'ok' ? 'ok' : 'warn');
+    sp.textContent = st === 'ok' ? 'OK' : st === 'no_plate' ? 'No plate' : 'Review';
+    sc.append(sp);
+    tr.append(cell(r.ts.slice(11)), imgCell(r.vehicle_snap), imgCell(r.snapshot), pc, sc);
+    tp.append(tr);
+  });
+}
+
+$('start').onclick = async () => {
+  const source = $('src').value.trim();
+  if (!source) { $('status-text').textContent = 'Enter a source first.'; return; }
+  const required = [...document.querySelectorAll('#req input:checked')].map(i => i.value);
+  streaming = false;
+  await post('/api/start', { source, every: Number($('every').value) || 3, required, mode: $('mode').value });
+  refreshStatus();
+};
+$('stop').onclick = async () => { await post('/api/stop'); refreshStatus(); };
+$('reset').onclick = async () => {
+  if (!confirm('Delete all recorded people, plates and snapshots?')) return;
+  await post('/api/reset'); refreshData();
+};
+$('file').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  $('status-text').textContent = 'Uploading ' + f.name + ' …';
+  const fd = new FormData(); fd.append('file', f);
+  const r = await api('/api/upload', { method: 'POST', body: fd });
+  $('src').value = r.path; $('status-text').textContent = 'Uploaded. Press Start.';
+};
+
+// ---- test with photos: upload one or more, show the annotated photo and the plate read ----
+$('photo-go').onclick = async () => {
+  const files = [...$('photo').files];
+  const box = $('photo-results'), msg = $('photo-msg');
+  if (!files.length) { msg.textContent = 'Choose one or more photos first.'; return; }
+  $('photo-go').disabled = true;
+  for (const [i, f] of files.entries()) {
+    msg.textContent = `Reading ${i + 1} of ${files.length}: ${f.name} …`;
+    const row = document.createElement('div');
+    row.style.cssText = 'display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:12px;align-items:start';
+    const left = document.createElement('div'), right = document.createElement('div');
+    row.append(left, right); box.prepend(row);
+    try {
+      const fd = new FormData(); fd.append('file', f);
+      const r = await api('/api/read-photo', { method: 'POST', body: fd });
+      const img = document.createElement('img'); img.src = '/snaps/' + r.image; img.alt = f.name;
+      img.style.cssText = 'width:100%;border-radius:6px;display:block'; left.append(img);
+      const name = document.createElement('div'); name.className = 'hint'; name.textContent = f.name; right.append(name);
+      if (!r.plates.length) { const p = document.createElement('div'); p.textContent = 'No plate found in this photo.'; right.append(p); }
+      r.plates.forEach(p => {
+        const line = document.createElement('div'); line.style.margin = '6px 0';
+        const big = document.createElement('span'); big.style.cssText = 'font-size:22px;font-weight:600;margin-right:8px';
+        big.textContent = p.plate || '(nothing read)';
+        const pill = document.createElement('span'); pill.className = 'pill ' + (p.valid ? 'ok' : 'warn');
+        pill.textContent = p.valid ? 'Valid Indian format' : 'Check this one';
+        const raw = document.createElement('div'); raw.className = 'hint'; raw.textContent = 'Raw OCR text: ' + (p.raw || '—');
+        line.append(big, pill, raw); right.append(line);
+      });
+    } catch (e) { right.textContent = f.name + ': failed (' + e.message + ')'; }
+  }
+  msg.textContent = 'Done.'; $('photo-go').disabled = false;
+};
+
+// ---- gate box: drag on the video to draw it; it is stored as fractions of the video frame ----
+let zone = null, drag = null;
+const overlay = $('overlay');
+
+function frameRect() {
+  // where the video frame sits inside the (letterboxed) <img>, in overlay pixels
+  const img = $('live'), cw = overlay.clientWidth, ch = overlay.clientHeight;
+  const nw = img.naturalWidth || cw, nh = img.naturalHeight || ch;
+  const s = Math.min(cw / nw, ch / nh);
+  const w = nw * s, h = nh * s;
+  return { x: (cw - w) / 2, y: (ch - h) / 2, w, h };
+}
+function toFrac(ev) {
+  const r = overlay.getBoundingClientRect(), f = frameRect();
+  const clamp = v => Math.min(1, Math.max(0, v));
+  return [clamp((ev.clientX - r.left - f.x) / f.w), clamp((ev.clientY - r.top - f.y) / f.h)];
+}
+function drawOverlay() {
+  overlay.width = overlay.clientWidth; overlay.height = overlay.clientHeight;
+  const ctx = overlay.getContext('2d'); ctx.clearRect(0, 0, overlay.width, overlay.height);
+  if (!drag) return;  // while not dragging, the server draws the box into the video itself
+  const f = frameRect();
+  const x1 = f.x + Math.min(drag.a[0], drag.b[0]) * f.w, x2 = f.x + Math.max(drag.a[0], drag.b[0]) * f.w;
+  const y1 = f.y + Math.min(drag.a[1], drag.b[1]) * f.h, y2 = f.y + Math.max(drag.a[1], drag.b[1]) * f.h;
+  ctx.strokeStyle = '#00dcff'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+}
+overlay.addEventListener('pointerdown', ev => { overlay.setPointerCapture(ev.pointerId); const p = toFrac(ev); drag = { a: p, b: p }; drawOverlay(); });
+overlay.addEventListener('pointermove', ev => { if (drag) { drag.b = toFrac(ev); drawOverlay(); } });
+overlay.addEventListener('pointerup', async ev => {
+  if (!drag) return;
+  drag.b = toFrac(ev);
+  const [x1, x2] = [drag.a[0], drag.b[0]].sort((p, q) => p - q), [y1, y2] = [drag.a[1], drag.b[1]].sort((p, q) => p - q);
+  drag = null; drawOverlay();
+  if (x2 - x1 < 0.02 || y2 - y1 < 0.02) return;  // a click, not a box
+  try { await post('/api/zone', { x1, y1, x2, y2 }); $('zone-text').textContent = 'Gate box set.'; }
+  catch (e) { $('zone-text').textContent = 'Could not set the box: ' + e.message; }
+});
+$('clear-zone').onclick = async () => { await post('/api/zone', {}); zone = null; $('zone-text').textContent = 'Gate box: whole frame.'; };
+
+setInterval(() => { refreshStatus().catch(() => {}); }, 1000);
+setInterval(() => { refreshData().catch(() => {}); }, 2000);
+refreshStatus(); refreshData();
+</script>
+</body>
+</html>

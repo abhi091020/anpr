@@ -1,0 +1,24 @@
+# Versions this project was built and tested with (Windows, Python 3.12, CPU only).
+#
+# torch / torchvision: the lines below are the CPU builds. On a machine with an NVIDIA GPU, install the CUDA builds
+# instead (see https://pytorch.org/get-started/locally/), and the GPU build of PaddlePaddle (paddlepaddle-gpu).
+# The code currently forces the CPU (device="cpu", enable_mkldnn=False); see PRODUCTION_PLAN.md section 3.2.
+torch==2.14.1
+torchvision==0.29.1
+ultralytics==8.4.181
+paddlepaddle==3.3.1
+paddleocr==3.7.0
+opencv-python==5.0.0.93
+numpy==2.3.5
+fastapi==0.143.3
+uvicorn[standard]==0.54.0
+httpx==0.28.1
+python-multipart==0.0.32
+lap==0.5.13
+
+# Evaluation, benchmarks and dataset download (not needed to run the web app)
+openpyxl==3.1.5
+huggingface_hub==2.2.0
+psutil==7.2.2
+remotezip==0.12.6
+supervision==0.31.0
