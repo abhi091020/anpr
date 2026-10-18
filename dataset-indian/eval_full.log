@@ -1,0 +1,72 @@
+INFO: Could not find files for the given pattern(s).
+C:\Users\Admin\ppe-anpr\.venv\Lib\site-packages\paddle\utils\cpp_extension\extension_utils.py:712: UserWarning: No ccache found. Please be aware that recompiling all source files may be required. You can download and install ccache from: https://github.com/ccache/ccache/blob/master/doc/INSTALL.md
+  warnings.warn(warning_message)
+[32mCreating model: ('PP-OCRv6_medium_det', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\Admin\.paddlex\official_models\PP-OCRv6_medium_det`.[0m
+[32mCreating model: ('PP-OCRv6_medium_rec', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\Admin\.paddlex\official_models\PP-OCRv6_medium_rec`.[0m
+50/1696  40s
+100/1696  80s
+150/1696  164s
+200/1696  231s
+250/1696  285s
+300/1696  347s
+350/1696  422s
+400/1696  453s
+450/1696  485s
+500/1696  521s
+550/1696  557s
+600/1696  596s
+650/1696  633s
+700/1696  668s
+750/1696  701s
+800/1696  739s
+850/1696  791s
+900/1696  870s
+950/1696  977s
+1000/1696  1184s
+1050/1696  1401s
+1100/1696  1572s
+1150/1696  1678s
+1200/1696  1945s
+1250/1696  2060s
+1300/1696  2409s
+1350/1696  2448s
+1400/1696  2500s
+1450/1696  2637s
+1500/1696  2943s
+1550/1696  3171s
+1600/1696  3367s
+1650/1696  3549s
+
+== ALL: 1696 photos
+plate found       1225/1696  (72.2%)
+exact text        731/1696  (43.1%)
+valid IN format   690/1696
+mean char acc     0.593
+seconds/photo     detect 0.11  ocr 1.98
+errors: {'wrong_chars': 142, 'missing_or_extra_chars': 332, 'nothing_read': 20, 'plate_not_found': 471}
+
+== TUNE split: 1052 photos
+plate found       768/1052  (73.0%)
+exact text        459/1052  (43.6%)
+valid IN format   438/1052
+mean char acc     0.601
+seconds/photo     detect 0.11  ocr 1.99
+errors: {'wrong_chars': 81, 'missing_or_extra_chars': 217, 'nothing_read': 11, 'plate_not_found': 284}
+
+== TEST split: 644 photos
+plate found       457/644  (71.0%)
+exact text        272/644  (42.2%)
+valid IN format   252/644
+mean char acc     0.579
+seconds/photo     detect 0.11  ocr 1.97
+errors: {'wrong_chars': 61, 'nothing_read': 9, 'missing_or_extra_chars': 115, 'plate_not_found': 187}
+
+== CLEAN TEST (test split, not used for tuning): 615 photos
+plate found       428/615  (69.6%)
+exact text        247/615  (40.2%)
+valid IN format   227/615
+mean char acc     0.559
+seconds/photo     detect 0.11  ocr 2.03
+errors: {'wrong_chars': 58, 'nothing_read': 9, 'missing_or_extra_chars': 114, 'plate_not_found': 187}

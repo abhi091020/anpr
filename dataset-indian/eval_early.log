@@ -1,0 +1,42 @@
+INFO: Could not find files for the given pattern(s).
+C:\Users\Admin\ppe-anpr\.venv\Lib\site-packages\paddle\utils\cpp_extension\extension_utils.py:712: UserWarning: No ccache found. Please be aware that recompiling all source files may be required. You can download and install ccache from: https://github.com/ccache/ccache/blob/master/doc/INSTALL.md
+  warnings.warn(warning_message)
+[32mCreating model: ('PP-OCRv6_medium_det', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\Admin\.paddlex\official_models\PP-OCRv6_medium_det`.[0m
+[32mCreating model: ('PP-OCRv6_medium_rec', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\Admin\.paddlex\official_models\PP-OCRv6_medium_rec`.[0m
+50/177  25s
+100/177  53s
+150/177  87s
+
+== ALL: 177 photos
+plate found       176/177  (99.4%)
+exact text        144/177  (81.4%)
+valid IN format   157/177
+mean char acc     0.953
+seconds/photo     detect 0.10  ocr 0.53
+errors: {'wrong_chars': 20, 'missing_or_extra_chars': 10, 'nothing_read': 2, 'plate_not_found': 1}
+
+== TUNE split: 113 photos
+plate found       112/113  (99.1%)
+exact text        89/113  (78.8%)
+valid IN format   100/113
+mean char acc     0.945
+seconds/photo     detect 0.11  ocr 0.56
+errors: {'wrong_chars': 13, 'missing_or_extra_chars': 9, 'plate_not_found': 1, 'nothing_read': 1}
+
+== TEST split: 64 photos
+plate found       64/64  (100.0%)
+exact text        55/64  (85.9%)
+valid IN format   57/64
+mean char acc     0.966
+seconds/photo     detect 0.09  ocr 0.49
+errors: {'wrong_chars': 7, 'nothing_read': 1, 'missing_or_extra_chars': 1}
+
+== CLEAN TEST (test split, not used for tuning): 35 photos
+plate found       35/35  (100.0%)
+exact text        30/35  (85.7%)
+valid IN format   32/35
+mean char acc     0.950
+seconds/photo     detect 0.08  ocr 0.39
+errors: {'wrong_chars': 4, 'nothing_read': 1}
